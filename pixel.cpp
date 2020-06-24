@@ -4,6 +4,16 @@
 #include "Input.cpp"
 #include "Game.cpp"
 
+#include <algorithm>
+
+int lastFrameTime = SDL_GetTicks();
+
+float getDeltaTime() {
+  int delta = std::max(SDL_GetTicks() - lastFrameTime, (Uint32)1);
+  lastFrameTime = SDL_GetTicks();
+  return (float)delta/1000.0f;
+}
+
 int main() {
   SDL_Init(SDL_INIT_EVERYTHING);
   atexit(SDL_Quit);
@@ -17,7 +27,7 @@ int main() {
   while(!game.quit()) {
     input.update();
 
-    game.update();
+    game.update(getDeltaTime());
 
     screen.redraw();
 

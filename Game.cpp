@@ -7,8 +7,9 @@ Game::init() {
 }
 
 void
-Game::update(/* TODO: Send in delta time */) {
+Game::update(float deltaTime) {
   // Do game stuff here; read input and draw graphics
+
   if(input.quit() || input.pressed(SDLK_ESCAPE)) {
     shouldQuit = true;
   }

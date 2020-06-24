@@ -5,7 +5,7 @@ class Game {
 public:
   Game(Screen &screen, Input &input) : screen(screen), input(input) {}
   void init();
-  void update();
+  void update(float deltaTime);
   bool quit() {return shouldQuit;}
 
 private:

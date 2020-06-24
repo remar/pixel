@@ -1,6 +1,5 @@
 #include "Screen.h"
 #include <string>
-#include <iostream>
 
 #define STBI_ONLY_PNG
 #define STB_IMAGE_IMPLEMENTATION
