@@ -10,7 +10,6 @@ float timePerTileMoved;
 float timeDecrementPerApple = 0.02f;
 float lowestTimePerTileMoved = 0.1f;
 float delayWhenDead = 2.0f;
-bool hasTurned = false;
 Point apple;
 bool dead = false;
 std::list<Direction> moveQueue;
@@ -110,14 +109,13 @@ Game::update(float deltaTime) {
   }
 
   while(accumulatedTime > timePerTileMoved) {
-    hasTurned = false;
+    accumulatedTime -= timePerTileMoved;
 
     if(!moveQueue.empty()) {
       direction = moveQueue.front();
       moveQueue.pop_front();
     }
 
-    accumulatedTime -= timePerTileMoved;
     Point head = snake.front();
 
     switch(direction) {
