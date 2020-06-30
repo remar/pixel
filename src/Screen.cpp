@@ -1,15 +1,14 @@
 #include "Screen.h"
 #include <string>
+#include <iostream>
 
-#define STBI_ONLY_PNG
-#define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
+Screen::Screen() : nextSpriteId(1) {
+  SDL_SetHint(SDL_HINT_RENDER_VSYNC, "1");
 
-Screen::Screen() {
   window = SDL_CreateWindow("pixel",
 			    SDL_WINDOWPOS_UNDEFINED,
 			    SDL_WINDOWPOS_UNDEFINED,
-			    width, height,
+			    width*3, height*3,
 			    SDL_WINDOW_SHOWN);
   assert(window != 0);
   renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
@@ -25,7 +24,7 @@ Screen::Screen() {
 }
 
 Screen::~Screen() {
-  deleteTileset();
+  tileset.clear();
 
   SDL_DestroyTexture(texture);
   SDL_DestroyRenderer(renderer);
@@ -47,29 +46,8 @@ Screen::redraw() {
 
 void
 Screen::loadTileset(std::string filename) {
-  int w, h, n;
-  unsigned char *data = stbi_load(filename.c_str(), &w, &h, &n, 0);
-  assert(n == 4);
-  if(data) {
-    deleteTileset();
-    createTileset(w, h);
-
-    uint8_t *pixels = data;
-    for(int i = 0;i < w*h;i++) {
-      uint8_t r = *pixels;
-      pixels++;
-      uint8_t g = *pixels;
-      pixels++;
-      uint8_t b = *pixels;
-      pixels++;
-      uint8_t a = *pixels;
-      pixels++;
-
-      tileset[i] = (a << 24) | (r << 16) | (g << 8) | (b << 0);
-    }
-
-    stbi_image_free(data);
-  }
+  tileset.loadPng(filename);
+  clearTilemap();
 }
 
 void
@@ -89,15 +67,56 @@ Screen::setTile(int x, int y, int index) {
   assert(y >= 0);
   assert(y < tilesPerColumn);
   assert(index >= 0);
-  assert(index < tilesInTileset);
-  assert(tileset != nullptr);
+  assert(index < tileset.width*tileset.height/(tileWidth*tileHeight));
+  assert(!tileset.empty());
 
-  int tilesPerRowInTileset = tilesetWidth / tileWidth;
+  int tilesPerRowInTileset = tileset.width / tileWidth;
   int offsetX = index % tilesPerRowInTileset;
   int offsetY = index / tilesPerRowInTileset;
   int offset = offsetX * tileWidth + offsetY * tileWidth * tileHeight * tilesPerRowInTileset;
 
-  tilemap[x + y*tilesPerRow] = tileset + offset;
+  tilemap[x + y*tilesPerRow] = tileset.pixels + offset;
+}
+
+void
+Screen::loadSprite(std::string filename) {
+  spriteDefinitions[filename] = std::shared_ptr<Image>(new Image(filename));
+}
+
+int
+Screen::createSpriteInstance(std::string spriteName) {
+  int spriteId = nextSpriteId;
+  nextSpriteId++;
+  spriteInstances[spriteId] = std::shared_ptr<SpriteInstance>(new SpriteInstance(spriteDefinitions.at(spriteName).get()));
+  return spriteId;
+}
+
+void
+Screen::drawSprites(float deltaTime) {
+  for(auto &spriteInstancePair : spriteInstances) {
+    SpriteInstance *spriteInstance = spriteInstancePair.second.get();
+
+    spriteInstance->animate(deltaTime);
+    uint32_t *pixels = spriteInstance->getPixels();
+    Point position = spriteInstance->getPosition();
+    int spriteDefWidth = spriteInstance->getWidth();
+    uint32_t *s = &screen[position.x + position.y * width];
+    for(int spriteY = 0;spriteY < tileHeight;spriteY++) {
+      memcpy(s, pixels, tileWidth*sizeof(uint32_t));
+      s += width;
+      pixels += spriteDefWidth;
+    }
+  }
+}
+
+void
+Screen::setSpritePosition(int spriteId, int x, int y) {
+  spriteInstances.at(spriteId)->setPosition(x, y);
+}
+
+void
+Screen::setSpriteAnimation(int spriteId, int animation) {
+  spriteInstances.at(spriteId)->setAnimation(animation);
 }
 
 void
@@ -112,23 +131,7 @@ Screen::drawTile(uint32_t *tile, int x, int y) {
   for(int tileY = 0;tileY < tileHeight;tileY++) {
     memcpy(s, tile, tileWidth*sizeof(uint32_t));
     s += width;
-    tile += tilesetWidth;
-  }
-}
-
-void
-Screen::createTileset(int width, int height) {
-  tileset = new uint32_t[width*height];
-  tilesetWidth = width;
-  tilesInTileset = (width*height)/(tileWidth*tileHeight);
-
-  clearTilemap();
-}
-
-void
-Screen::deleteTileset() {
-  if(tileset) {
-    delete[] tileset;
+    tile += tileset.width;
   }
 }
 

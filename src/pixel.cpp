@@ -1,6 +1,8 @@
 #include <SDL2/SDL.h>
 
 #include "Screen.cpp"
+#include "SpriteInstance.cpp"
+#include "Image.cpp"
 #include "Input.cpp"
 #include "Game.cpp"
 

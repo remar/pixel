@@ -5,6 +5,11 @@
 #include <SDL2/SDL.h>
 #include <stdint.h>
 #include <string>
+#include <map>
+
+#include "Image.h"
+#include "SpriteInstance.h"
+#include <memory>
 
 class Screen {
 public:
@@ -24,6 +29,12 @@ public:
   void loadTileset(std::string filename);
   void drawTiles();
   void setTile(int x, int y, int index);
+
+  void loadSprite(std::string filename);
+  int createSpriteInstance(std::string spriteName);
+  void drawSprites(float deltaTime);
+  void setSpritePosition(int spriteId, int x, int y);
+  void setSpriteAnimation(int spriteId, int animation);
 
   void toggleFullscreen();
   void showCursor() {SDL_ShowCursor(SDL_ENABLE);}
@@ -60,9 +71,13 @@ private:
   uint32_t screen[width*height];
 
   uint32_t *tilemap[tilesPerRow*tilesPerColumn];
-  uint32_t *tileset = nullptr;
-  int tilesetWidth;
-  int tilesInTileset;
+  Image tileset;
+
+  std::map<std::string, std::shared_ptr<Image>> spriteDefinitions;
+  std::map<int, std::shared_ptr<SpriteInstance>> spriteInstances;
+  int nextSpriteId;
+
+  Image sprite;
 
   SDL_Window *window;
   SDL_Renderer *renderer;
