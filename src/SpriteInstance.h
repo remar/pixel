@@ -26,7 +26,7 @@ private:
   int frame = 0;
   int totalFrames = 0;
   float accumulatedFrameTime = 0;
-  float frameDuration = 0.25f;
+  float frameDuration = 0.10f;
 };
 
 #endif

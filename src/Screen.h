@@ -19,6 +19,8 @@ public:
   static const int tileHeight = 10;
   static const int tilesPerRow = width/tileWidth;
   static const int tilesPerColumn = height/tileHeight;
+  static const int spriteWidth = 10;
+  static const int spriteHeight = 10;
 
   Screen();
   ~Screen();

@@ -97,14 +97,36 @@ Screen::drawSprites(float deltaTime) {
     SpriteInstance *spriteInstance = spriteInstancePair.second.get();
 
     spriteInstance->animate(deltaTime);
-    uint32_t *pixels = spriteInstance->getPixels();
+
+    uint32_t offset = 0;
+    uint32_t frameWidth = spriteWidth;
     Point position = spriteInstance->getPosition();
+    if(position.x < -spriteWidth) {
+      continue;
+    } else if(position.x < 0) {
+      offset = -position.x;
+      frameWidth = spriteWidth - offset;
+    }
+
+    assert((position.x+spriteWidth) <= Screen::width); // TODO: Clip right
+    assert(position.y >= 0); // TODO: Clip top
+    assert((position.y+spriteHeight) <= Screen::height); // TODO: Clip bottom
+
+    uint32_t *pixels = spriteInstance->getPixels() + offset;
     int spriteDefWidth = spriteInstance->getWidth();
-    uint32_t *s = &screen[position.x + position.y * width];
+    uint32_t *s = &screen[position.x + offset + position.y * width];
+    int offsetToNextScreenRow = (width - (spriteWidth - offset));
+    int offsetToNextSpriteRow = (spriteDefWidth - (spriteWidth - offset));
     for(int spriteY = 0;spriteY < tileHeight;spriteY++) {
-      memcpy(s, pixels, tileWidth*sizeof(uint32_t));
-      s += width;
-      pixels += spriteDefWidth;
+      for(int spriteX = offset;spriteX < spriteWidth;spriteX++) {
+	if(*pixels & 0xff000000) {
+	  *s = *pixels;
+	}
+	s++;
+	pixels++;
+      }
+      s += offsetToNextScreenRow;
+      pixels += offsetToNextSpriteRow;
     }
   }
 }
