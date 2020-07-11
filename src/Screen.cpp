@@ -99,30 +99,38 @@ Screen::drawSprites(float deltaTime) {
     spriteInstance->animate(deltaTime);
 
     uint32_t offset = 0;
+    uint32_t screenOffset = 0;
     uint32_t frameWidth = spriteWidth;
+    uint32_t frameHeight = spriteHeight;
+    int spriteDefWidth = spriteInstance->getWidth();
     Point position = spriteInstance->getPosition();
-    if(position.x < -spriteWidth) {
+    if(position.x < -spriteWidth
+       || position.x > Screen::width
+       || position.y < -spriteHeight
+       || position.y > Screen::height) {
       continue;
-    } else if(position.x < 0) {
-      offset = -position.x;
-      frameWidth = spriteWidth - offset;
     }
 
-    if(position.x > Screen::width) {
-      continue;
+    if(position.x < 0) {
+      screenOffset = offset = -position.x;
+      frameWidth = spriteWidth - offset;
     } else if(position.x + spriteWidth > Screen::width) {
       frameWidth = Screen::width - position.x;
     }
 
-    assert(position.y >= 0); // TODO: Clip top
-    assert((position.y+spriteHeight) <= Screen::height); // TODO: Clip bottom
+    if(position.y < 0) {
+      offset += spriteDefWidth * -position.y;
+      screenOffset += Screen::width * -position.y;
+      frameHeight += position.y;
+    } else if(position.y + spriteHeight > Screen::height) {
+      frameHeight = Screen::height - position.y;
+    }
 
     uint32_t *pixels = spriteInstance->getPixels() + offset;
-    int spriteDefWidth = spriteInstance->getWidth();
-    uint32_t *s = &screen[position.x + offset + position.y * width];
+    uint32_t *s = &screen[position.x + screenOffset + position.y * width];
     int offsetToNextScreenRow = (width - frameWidth);
     int offsetToNextSpriteRow = (spriteDefWidth - frameWidth);
-    for(int spriteY = 0;spriteY < tileHeight;spriteY++) {
+    for(int spriteY = 0;spriteY < frameHeight;spriteY++) {
       for(int spriteX = 0;spriteX < frameWidth;spriteX++) {
 	if(*pixels & 0xff000000) {
 	  *s = *pixels;
